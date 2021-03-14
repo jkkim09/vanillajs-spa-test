@@ -32,11 +32,14 @@ const router = async () => {
 }
 
 /**
- * hash값이 변화시 화면을 렌더링 한다
- */
-window.addEventListener('hashchange', router);
-
-/**
  * window 로드시 화면을 렌더링 한다
  */
-window.addEventListener('load', router);
+// window.addEventListener('load', router)
+
+window.onload = () => {
+    /**
+     * hash값이 변화시 화면을 렌더링 한다
+     */
+    window.addEventListener('hashchange', router)
+    router()
+}

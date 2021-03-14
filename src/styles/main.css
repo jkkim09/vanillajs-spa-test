@@ -122,6 +122,10 @@ ul {
     padding: 15px 0;
 }
 
+.mainPage__blockList > li > label {
+    cursor: pointer;
+}
+
 .mainPage__submit{
     height: 100px;
     text-align: center;
@@ -146,6 +150,7 @@ ul {
 }
 
 .result__itemListLow {
+    cursor: pointer;
     position: relative;
     background-color: #ededed;
     margin-bottom: 5px;
@@ -179,4 +184,12 @@ ul {
     left: 0;
     height: 100%;
     background-color: #b3f2fd;
+}
+
+.active .result__itemListLow {
+    background-color: #bababa;
+}
+
+.active .result__itemListLow--back {
+    background-color: #fdb3b3;
 }

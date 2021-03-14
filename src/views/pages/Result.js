@@ -1,6 +1,36 @@
 import {Api} from '../../services/api.js'
 import Utils from '../../services/utils.js'
 
+import ResultComponent from '../components/resultComponent.js'
+
+/**
+ *  payload: 설문 결과,
+ *  parsingData: 설문결과 parsing 값,
+ *  listJson: 설문 정보
+ */
+let State = {}
+
+/**
+ * 클릭 항목
+ */
+let Clicks = {}
+
+const setState = (data) => {
+    State = data
+}
+
+const getState = () => {
+    return State
+}
+
+const setClicks = (data) => {
+    Clicks = {...Clicks, ...data}
+}
+
+const getClicks = () => {
+    return Clicks
+}
+
 const getPosts = async (eventId, userId) => {
    try {
         // 설문지 정보
@@ -18,6 +48,13 @@ const getPosts = async (eventId, userId) => {
         }
 
         const parsingData = Utils.resultDataParsing(json.payload)
+
+        setState({
+            payload: json.payload,
+            parsingData: parsingData,
+            listJson: listJson.payload
+        })
+
         return {
             parsingData: parsingData,
             listJson: listJson.payload
@@ -27,59 +64,46 @@ const getPosts = async (eventId, userId) => {
    }
 }
 
+/**
+ * 항목 클릭 이벤트
+ * 
+ * @param {*} target 
+ */
+const targetClick = (target) => {
+    const content = document.getElementById('page_container')
+    const selectValue = {}
+    const state = getState()
+    const cliks = getClicks()
+    const dataItem = target.getAttribute('data-item')
+    
+    if (!cliks[dataItem]) {
+        selectValue[dataItem] = true
+        setClicks(selectValue)
+    } else {
+        delete cliks[dataItem]
+    }
+    
+    const itmes = Utils.selectUlsersItem(getClicks(), state)
+    const component = ResultComponent({
+        listJson: state.listJson,
+        parsingData: Utils.resultDataParsing(itmes.length > 0 ? itmes : state.payload),
+        select: getClicks()
+    })
+
+    content.innerHTML = component
+    Result.after_render()
+}
+
 let Result = {
     render : async ({eventId, userId}) => {
         const {parsingData, listJson} = await getPosts(eventId, userId)
-
-        const liEl = (item, index) => {
-            const lowLi = (lowIndex, title, selectItem) => {
-                const percen = (selectItem[lowIndex] / selectItem['total'] * 100).toFixed(1)
-                return `
-                    <li class='result__itemListLow'>
-                        <div class='result__itemListLow--lows'>
-                            <div class='result__itemList--low1'>${percen}%</div>
-                            <div class='result__itemList--low2'>${title}</div>
-                            <div class='result__itemList--low3'>${selectItem[lowIndex]}</div>
-                        </div>
-                        <div class='result__itemListLow--back' style='width:${percen}%'></div>
-                    </li>
-                `
-            }
-
-            if (item.block_type === 'select') {
-                const id = item.id
-                const selectItem = parsingData[id]       
-                const options = item.option
-                return `
-                    <li class='mar-bot-10'>
-                        <h1 class='result__item--title'>Q.${options.title}</h1>
-                        <ul class='result__itemList'>
-                            ${options.items.map((title, index) => {
-                                return lowLi(index, title, selectItem)
-                            }).join('\n')}
-                        </ul>
-                    </li>
-                `
-            }
-            return ''
-        }
-
-        let view =  `
-            <div class='result'>
-                <h1 class='result__title mar-bot-10'>버즈니 채용 설문조사</h1>
-                <div>
-                    <ul>
-                        ${listJson.blocks.map((item, index) => {
-                            return liEl(item, index)
-                        }).join('\n')}
-                    </ul>
-                </div>
-            </div>
-        `
-        return view
+        return ResultComponent({parsingData, listJson})
     },
     after_render: () => {
-
+        const liEls =document.getElementsByClassName('result__itemListLow')
+        for (let u=0; u<liEls.length; u++) {
+            liEls[u].addEventListener('click', targetClick.bind(this, liEls[u]))
+        }
     }
 }
 export default Result
